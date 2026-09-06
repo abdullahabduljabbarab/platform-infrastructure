@@ -81,11 +81,23 @@ Cloud Shell. The code and the import blocks are written and CI-validated; the
 zero-diff reconciliation and apply happen there. The state bucket is created and
 versioned.
 
-**State:** Terraform written and CI-validated, remote-state bucket live. The
-incremental import/apply (to zero-diff plans) is the operational step run in a
-Terraform-capable environment. Next: M3, remaining wiring (analytics Scheduler,
-IAM cleanup including the orphaned SA keys, de-duplicating shared definitions from
-the service repos).
+**Applied from Cloud Shell.** Terraform ran from Cloud Shell (the dev machine
+cannot run the provider plugin). `terraform plan` showed the intended adoption:
+**5 to import, 0 to add, 1 to change, 0 to destroy**, the WIF pool and the three
+topics importing with no changes, and the WIF provider taking one deliberate,
+cosmetic change: setting its `display_name` to "GitHub" (it had been created via
+gcloud without one; nothing about its issuer, attribute mapping or condition
+changed). `terraform apply` completed: **5 imported, 0 added, 1 changed, 0
+destroyed**, and `terraform state list` confirms the five resources are now under
+Terraform management, with state in
+`gs://ledger-api-507618-tfstate/platform/default.tfstate` (versioned). No resource
+was recreated.
+
+**State:** complete. Existing shared resources were adopted incrementally into
+remote Terraform state without recreation, five imported, none added, none
+destroyed, one deliberate provider display-name change. Next: M3, remaining wiring
+(analytics Scheduler, IAM cleanup including the orphaned SA keys, de-duplicating
+shared definitions from the service repos).
 
 ## Milestone 3: Remaining wiring and cleanup
 

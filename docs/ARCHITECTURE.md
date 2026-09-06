@@ -55,7 +55,7 @@ The line the ownership charter draws:
 
 ## Terraform and state
 
-Shared infrastructure is defined in [`terraform/`](terraform/) against a versioned
+Shared infrastructure is defined in [`terraform/`](../terraform/) against a versioned
 GCS remote-state backend (`gs://ledger-api-507618-tfstate`, prefix `platform`).
 Existing live resources are adopted with Terraform 1.5 import blocks, reconciled
 to a zero-diff plan, and never recreated. CI validates the configuration on every

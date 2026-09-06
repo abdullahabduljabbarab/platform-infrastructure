@@ -71,7 +71,7 @@ incrementally rather than mass-imported, so a heavily-defaulted live resource
 cannot be accidentally mutated.
 
 The adoption is declared with Terraform 1.5+ **import blocks** in
-[`terraform/imports.tf`](terraform/imports.tf): the WIF pool and provider and the
+[`terraform/imports.tf`](../terraform/imports.tf): the WIF pool and provider and the
 three shared Pub/Sub topics. Their `resource` blocks in `main.tf` are written to
 match the live configuration so the plan is zero-diff.
 
