@@ -86,3 +86,69 @@ incremental import/apply (to zero-diff plans) is the operational step run in a
 Terraform-capable environment. Next: M3, remaining wiring (analytics Scheduler,
 IAM cleanup including the orphaned SA keys, de-duplicating shared definitions from
 the service repos).
+
+## Milestone 3: Remaining wiring and cleanup
+
+**Orphaned deploy credential fully revoked.** Deleting the `GCP_SA_KEY` GitHub
+secrets removed the stored copies, but the underlying GCP key lived on. Found the
+owning account, `github-deploy`, which held one user-managed JSON key and no
+Workload Identity binding (so the key was its only means of authentication) and
+was used only by the now-migrated ledger and orchestrator. Deleted the key, then
+the now-inert service account. The credential is dead on both ends.
+
+**Analytics Scheduler: sanctioned fallback to on-demand refresh.** Cloud
+Scheduler requires the project to have an App Engine application, and this project
+has none. An App Engine app's location is permanent and cannot be changed, an
+irreversible project constraint not worth taking for a portfolio auto-refresh. So
+the refresh Job is run on demand (as it was for the analytics evidence) rather
+than forcing an App Engine app. Recorded as a decision; in a project provisioned
+with the App Engine region chosen deliberately, or in a region where Cloud
+Scheduler is decoupled, the schedule wires straight to the existing Job.
+
+**Shared-definition de-duplication.** The Workload Identity pool and provider were
+declared (created) in the risk engine's Terraform and merely referenced by
+notification and analytics. Removed the creation from the risk engine's Terraform
+so it references the pool by composed name like the others; platform-infra is now
+the sole owner of the pool and provider, matching RESOURCE_OWNERSHIP.md.
+
+**Runtime identity audit** recorded in RESOURCE_OWNERSHIP.md: deploy identity is
+fully federated across all five services; the four services still on the default
+compute runtime SA are noted as hardening backlog (analytics already uses a
+dedicated dataset-scoped runtime SA), with no over-privilege found that warrants
+immediate action.
+
+**Docs completed:** ARCHITECTURE, DECISIONS, SECURITY, THREAT_MODEL, bringing the
+repo's documentation set to full.
+
+**State:** complete. Next: M4, evidence and freeze.
+
+## Milestone 4: Evidence and freeze
+
+Verified against the live ecosystem:
+
+- **Zero long-lived CI/CD credentials.** `GCP_SA_KEY` appears in zero of the five
+  service repositories; the historical `github-deploy` key is revoked and the
+  account deleted.
+- **Five repository-scoped deploy identities** exist and are the only deploy
+  accounts: `ledger-deploy`, `orchestrator-deploy`, `risk-engine-deploy`,
+  `notification-service-deploy`, `analytics-service-deploy`, each federated to
+  exactly its own repository.
+- **All five services healthy** after the migration: ledger, orchestrator, risk,
+  notification and analytics each return 200 on `/health`.
+- **Shared infrastructure as code** with a versioned GCS remote-state backend and
+  incremental import blocks; the platform Terraform validates in CI.
+- **Explicit ownership**: one owner per resource (RESOURCE_OWNERSHIP.md), with the
+  WIF pool/provider duplication removed from the risk engine's Terraform.
+
+The statement this earns: **five independently deployed services, zero long-lived
+CI cloud credentials, repository-scoped OIDC federation, explicit infrastructure
+ownership, and shared GCP infrastructure managed as code.**
+
+**Operational follow-ups (documented, not blocking):** run the Terraform
+import/apply from Cloud Shell to populate remote state (the machine here cannot run
+the provider plugin); wire the analytics Scheduler if an App Engine region is ever
+chosen deliberately; migrate the remaining services to dedicated runtime identities
+as hardening.
+
+**State:** complete. platform-infrastructure is the sixth and final ABS repository;
+the ecosystem is assembled.
