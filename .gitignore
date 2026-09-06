@@ -1,0 +1,16 @@
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+crash.log
+
+# Service-account keys must never be committed. Deployment is keyless (WIF).
+*.json.key
+service-account*.json
+gcp-key*.json
+
+.idea/
+.vscode/
+*.swp
+*~
