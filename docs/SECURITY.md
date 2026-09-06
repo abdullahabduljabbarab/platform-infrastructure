@@ -44,11 +44,11 @@ enabled, it gets its own carefully-scoped identity (ADR-006).
 
 ## Known limitations and backlog
 
-- **Runtime identities.** Deploy identity is fully federated; four of five
-  services still run on the default compute service account (analytics uses a
-  dedicated dataset-scoped runtime SA). Moving them to dedicated runtime
-  identities is hardening backlog, no over-privilege warranting immediate action
-  was found.
+- **Runtime identities.** Deploy identity is fully federated. Services are being
+  moved off the default compute service account onto dedicated least-privilege
+  runtime identities, one at a time, safest first. Analytics and notification are
+  done (each holds only what it needs; notification, a strict sink, has no Pub/Sub
+  role at all); the remaining three (risk, orchestrator, ledger) are in progress.
 - **Incremental Terraform adoption.** Only the WIF pool/provider and shared topics
   are adopted; project-level IAM and the Cloud SQL instance are documented but not
   yet under Terraform lifecycle, deliberately, to avoid drift.

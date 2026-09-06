@@ -53,15 +53,15 @@ source, or a documented dependency).
 
 ## Runtime identity audit
 
-Deploy identity is fully federated. Runtime identities are recorded here; moving
-services from the default compute service account to dedicated runtime identities
-(as analytics already did) is hardening backlog, not part of this migration,
-unless a specific identity is found over-privileged.
+Deploy identity is fully federated. Runtime identities are being moved off the
+default compute service account onto dedicated, least-privilege runtime accounts,
+one service at a time, safest first. Each account holds only what its service
+needs and nothing else.
 
 | Service | Runtime identity |
 |---------|------------------|
 | ledger-api | default compute SA |
 | payment-orchestrator | default compute SA |
 | risk-engine | default compute SA |
-| notification-service | default compute SA |
+| notification-service | `notification-service-runtime` (dedicated; Cloud SQL Client + read on its own database-url secret; no Pub/Sub, it is a strict sink) |
 | analytics-service | `analytics-service-runtime` (dedicated, dataset-scoped) |
