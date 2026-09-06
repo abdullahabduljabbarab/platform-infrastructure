@@ -65,19 +65,36 @@ serving; fix the WIF setup and retry before touching the secret.
 
 ## Terraform adoption (hybrid, incremental)
 
-Shared infrastructure is brought under Terraform with a GCS remote-state backend,
-but adopted incrementally rather than mass-imported, so a heavily-defaulted live
-resource cannot be accidentally mutated.
+Shared infrastructure is brought under Terraform with a GCS remote-state backend
+(`gs://ledger-api-507618-tfstate`, prefix `platform`, versioned), but adopted
+incrementally rather than mass-imported, so a heavily-defaulted live resource
+cannot be accidentally mutated.
 
-For each clearly platform-owned resource (the WIF pool and provider, the shared
-Pub/Sub topics, project API/IAM):
+The adoption is declared with Terraform 1.5+ **import blocks** in
+[`terraform/imports.tf`](terraform/imports.tf): the WIF pool and provider and the
+three shared Pub/Sub topics. Their `resource` blocks in `main.tf` are written to
+match the live configuration so the plan is zero-diff.
+
+**Where to run it.** This machine's TLS-inspecting network kills Terraform's
+provider plugin (the same reason every repo validates in CI, not locally), so
+`init`/`plan`/`apply` run from **Google Cloud Shell**, where Terraform is
+preinstalled, credentials are present, and there is no interception:
 
 ```
-terraform import <address> <resource id>
-terraform plan          # inspect
-# proceed only when the plan is zero-diff or every diff is understood and intended
+# in Cloud Shell, from the terraform/ directory of this repo
+terraform init                       # connects to the GCS backend
+terraform plan                       # reconciles the import blocks against live state
+# read the plan: it should show the resources being IMPORTED with NO changes.
+# if a resource shows a diff, adjust its block in main.tf to match live, re-plan,
+# and only proceed when the diff is zero or every difference is intended.
+terraform apply                      # writes the imported resources into remote state
 ```
 
-No `terraform apply` runs against an imported resource until its plan is zero-diff
-or the differences are deliberate. The Cloud SQL instance is deliberately **not**
-adopted; it stays a data source owned by ledger-api.
+Adopt incrementally: to read one resource's plan at a time, comment out the other
+import blocks first. No `apply` runs against an imported resource until its plan
+is zero-diff or the differences are deliberate.
+
+The Cloud SQL instance (`ledger-db`) is deliberately **not** adopted; it stays
+owned by ledger-api and is referenced as a data source, to avoid drift on a
+heavily-defaulted resource. Project-level IAM and API enablement are likewise
+left documented for a later, careful pass rather than mass-imported now.
