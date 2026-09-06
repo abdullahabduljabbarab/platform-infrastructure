@@ -156,10 +156,52 @@ CI cloud credentials, repository-scoped OIDC federation, explicit infrastructure
 ownership, and shared GCP infrastructure managed as code.**
 
 **Operational follow-ups:** the Terraform import/apply has since been run from
-Cloud Shell (remote state populated), and the analytics Scheduler is wired. The
-only remaining item is hardening backlog: migrating the four services still on the
-default compute runtime SA to dedicated runtime identities (analytics already
-has one).
+Cloud Shell (remote state populated), and the analytics Scheduler is wired.
 
 **State:** complete. platform-infrastructure is the sixth and final ABS repository;
 the ecosystem is assembled.
+
+## Milestone 5: Dedicated runtime identities
+
+**Goal:** Close the last identity gap. Deploy identity was fully federated, but
+four of the five services still ran on the shared default compute service account
+(only analytics had a dedicated runtime SA). A shared, broad runtime account is
+exactly the ambient-authority weakness the deploy migration removed on the CI side.
+Give each service its own least-privilege runtime identity.
+
+**Done, one service at a time, safest first**, verifying each live before the next
+so a mistake could never cascade through the money path:
+
+1. **notification-service** to `notification-service-runtime`. As a strict sink it
+   holds only Cloud SQL Client and read access to its own `notify-database-url`
+   secret, with no Pub/Sub role at all.
+2. **risk-engine** to `risk-engine-runtime`: Cloud SQL Client, read on
+   `risk-database-url`, publisher on `risk-events`.
+3. **payment-orchestrator** to `payment-orchestrator-runtime`: Cloud SQL Client,
+   read on its own `orchestrator-database-url` and on the `ledger-admin-password`
+   it authenticates to the ledger with, publisher on `payment-events`.
+4. **ledger-api** to `ledger-api-runtime`, deliberately last as the service that
+   owns all financial truth: Cloud SQL Client, read on `database-url` and
+   `jwt-secret-key`, publisher on `transaction-events`.
+
+Each service was set via `--service-account` in its deploy, and each service's
+Terraform records its runtime account and its exact bindings. The repository-scoped
+deploy accounts already held `iam.serviceAccountUser`, so no new act-as binding was
+needed.
+
+**Verified live per service:** the runtime account actually switched on the running
+revision, `/health` returned `database: connected` (proving both the secret read
+and the Cloud SQL connection under the new identity), logs were clean, and a real
+business flow ran end to end: a live payment produced a customer notification
+delivery (notification), a published `risk.evaluated` (risk), a settled payment
+with reserve and capture transactions (orchestrator), and, on the ledger, JWT
+signing, deposit/reserve/capture/release transactions with exactly reconciling
+balances, and `transaction-events` publishing. Every outbox drain reported
+`failed: 0`.
+
+**Outcome:** five services, five dedicated least-privilege runtime identities, none
+on the default compute service account. Combined with the deploy migration, the
+platform now has no shared ambient authority on either the deploy or the runtime
+side.
+
+**State:** complete.

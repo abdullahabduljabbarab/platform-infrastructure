@@ -44,13 +44,13 @@ enabled, it gets its own carefully-scoped identity (ADR-006).
 
 ## Known limitations and backlog
 
-- **Runtime identities.** Deploy identity is fully federated. Services are being
-  moved off the default compute service account onto dedicated least-privilege
-  runtime identities, one at a time, safest first. Analytics, notification, risk
-  and the orchestrator are done (each holds only what it needs; notification, a
-  strict sink, has no Pub/Sub role at all; risk and the orchestrator publish only
-  to their own topics). Only the ledger remains, deliberately last as the service
-  that owns all financial truth.
+- **Runtime identities.** Both deploy and runtime identity are now hardened. Every
+  service runs under a dedicated, least-privilege runtime account, none on the
+  default compute service account. The migration was done one service at a time,
+  safest first (notification, risk, orchestrator, ledger), verifying each live
+  before the next. Each account holds only Cloud SQL Client, read access to its
+  own secrets, and publisher on its own topic where it produces events;
+  notification, a strict sink, has no Pub/Sub role at all.
 - **Incremental Terraform adoption.** Only the WIF pool/provider and shared topics
   are adopted; project-level IAM and the Cloud SQL instance are documented but not
   yet under Terraform lifecycle, deliberately, to avoid drift.

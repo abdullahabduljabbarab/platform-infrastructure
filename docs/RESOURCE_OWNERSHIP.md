@@ -53,14 +53,16 @@ source, or a documented dependency).
 
 ## Runtime identity audit
 
-Deploy identity is fully federated. Runtime identities are being moved off the
-default compute service account onto dedicated, least-privilege runtime accounts,
-one service at a time, safest first. Each account holds only what its service
-needs and nothing else.
+Deploy identity is fully federated, and every service now runs under a dedicated,
+least-privilege runtime account rather than the default compute service account.
+The migration was done one service at a time, safest first (notification, risk,
+orchestrator, ledger), verifying each live before the next. Each account holds
+only what its service needs and nothing else: Cloud SQL Client, read access to
+its own secrets, and publisher on its own topic where it produces events.
 
 | Service | Runtime identity |
 |---------|------------------|
-| ledger-api | default compute SA |
+| ledger-api | `ledger-api-runtime` (dedicated; Cloud SQL Client + read on its own database-url and jwt-secret-key secrets + publisher on transaction-events) |
 | payment-orchestrator | `payment-orchestrator-runtime` (dedicated; Cloud SQL Client + read on its own database-url secret and the ledger admin-password secret + publisher on payment-events) |
 | risk-engine | `risk-engine-runtime` (dedicated; Cloud SQL Client + read on its own database-url secret + publisher on risk-events) |
 | notification-service | `notification-service-runtime` (dedicated; Cloud SQL Client + read on its own database-url secret; no Pub/Sub, it is a strict sink) |
