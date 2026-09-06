@@ -46,9 +46,10 @@ enabled, it gets its own carefully-scoped identity (ADR-006).
 
 - **Runtime identities.** Deploy identity is fully federated. Services are being
   moved off the default compute service account onto dedicated least-privilege
-  runtime identities, one at a time, safest first. Analytics and notification are
-  done (each holds only what it needs; notification, a strict sink, has no Pub/Sub
-  role at all); the remaining three (risk, orchestrator, ledger) are in progress.
+  runtime identities, one at a time, safest first. Analytics, notification and
+  risk are done (each holds only what it needs; notification, a strict sink, has
+  no Pub/Sub role at all; risk publishes only to its own risk-events topic); the
+  remaining two (orchestrator, ledger) are in progress.
 - **Incremental Terraform adoption.** Only the WIF pool/provider and shared topics
   are adopted; project-level IAM and the Cloud SQL instance are documented but not
   yet under Terraform lifecycle, deliberately, to avoid drift.

@@ -62,6 +62,6 @@ needs and nothing else.
 |---------|------------------|
 | ledger-api | default compute SA |
 | payment-orchestrator | default compute SA |
-| risk-engine | default compute SA |
+| risk-engine | `risk-engine-runtime` (dedicated; Cloud SQL Client + read on its own database-url secret + publisher on risk-events) |
 | notification-service | `notification-service-runtime` (dedicated; Cloud SQL Client + read on its own database-url secret; no Pub/Sub, it is a strict sink) |
 | analytics-service | `analytics-service-runtime` (dedicated, dataset-scoped) |
