@@ -75,23 +75,29 @@ migration, unless a specific identity is found over-privileged.
 **Consequences:** The finished, measurable property (zero stored deploy keys) is
 delivered cleanly, without an open-ended IAM refactor across every service.
 
-## ADR-005: Do not create an App Engine app for Cloud Scheduler
+## ADR-005: The analytics refresh runs on a schedule, without App Engine
 
-**Status:** Accepted
+**Status:** Accepted (superseded an earlier decision to defer it)
 
-**Context:** Wiring the analytics refresh Job to a schedule needs Cloud Scheduler,
-which in this project and region requires an App Engine application. An App Engine
-app's location is permanent and cannot be changed.
+**Context:** The analytics refresh Job should run automatically, not only on
+demand. A first attempt to create a Cloud Scheduler job failed with `NOT_FOUND`,
+which looked like the historical requirement that Cloud Scheduler needs a project
+App Engine application, whose location is permanent. That briefly led to deferring
+the schedule and running the Job on demand.
 
-**Decision:** Do not create the App Engine app. The refresh Job runs on demand.
-Forcing a permanent, irreversible-region project resource for a portfolio
-auto-refresh is not worth it; in a project provisioned with the App Engine region
-chosen deliberately, or a region where Cloud Scheduler is decoupled from App
-Engine, the schedule wires straight to the existing Job.
+**Decision:** Wire the schedule. The earlier failure was not the App Engine
+requirement at all: it was the Cloud Scheduler API having only just been enabled
+and not yet propagated. Retried later, `gcloud scheduler jobs create http`
+succeeded with no App Engine app in the project. A Cloud Scheduler job runs the
+`analytics-refresh` Cloud Run Job every ten minutes, authenticating as a dedicated
+`analytics-scheduler` identity that holds `run.invoker` on that Job and nothing
+else.
 
-**Consequences:** Analytics is refreshed on demand rather than automatically, an
-accepted, documented limitation, and the project avoids a permanent constraint
-taken under time pressure two metres from the finish line.
+**Consequences:** Analytics refreshes automatically, off the ingest path, with no
+permanent App Engine constraint taken. Verified live by triggering the scheduler
+manually and observing a successful refresh execution. The scheduler and its
+identity are declared in the analytics service's Terraform (it is analytics's own
+refresh), and this repo owns only the generic scheduling enablement.
 
 ## ADR-006: No CI deploy identity for platform-infrastructure
 

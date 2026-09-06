@@ -108,14 +108,13 @@ Workload Identity binding (so the key was its only means of authentication) and
 was used only by the now-migrated ledger and orchestrator. Deleted the key, then
 the now-inert service account. The credential is dead on both ends.
 
-**Analytics Scheduler: sanctioned fallback to on-demand refresh.** Cloud
-Scheduler requires the project to have an App Engine application, and this project
-has none. An App Engine app's location is permanent and cannot be changed, an
-irreversible project constraint not worth taking for a portfolio auto-refresh. So
-the refresh Job is run on demand (as it was for the analytics evidence) rather
-than forcing an App Engine app. Recorded as a decision; in a project provisioned
-with the App Engine region chosen deliberately, or in a region where Cloud
-Scheduler is decoupled, the schedule wires straight to the existing Job.
+**Analytics Scheduler: wired.** A first `gcloud scheduler jobs create` failed with
+`NOT_FOUND`, which looked like the historical App Engine prerequisite. Retried
+after the Cloud Scheduler API had propagated, it succeeded with no App Engine app.
+A Cloud Scheduler job now runs the `analytics-refresh` Cloud Run Job every ten
+minutes as the dedicated `analytics-scheduler` identity (holding only
+`run.invoker` on that Job). Verified live: a manual trigger produced a successful
+refresh execution. (ADR-005.)
 
 **Shared-definition de-duplication.** The Workload Identity pool and provider were
 declared (created) in the risk engine's Terraform and merely referenced by
@@ -156,11 +155,11 @@ The statement this earns: **five independently deployed services, zero long-live
 CI cloud credentials, repository-scoped OIDC federation, explicit infrastructure
 ownership, and shared GCP infrastructure managed as code.**
 
-**Operational follow-ups (documented, not blocking):** run the Terraform
-import/apply from Cloud Shell to populate remote state (the machine here cannot run
-the provider plugin); wire the analytics Scheduler if an App Engine region is ever
-chosen deliberately; migrate the remaining services to dedicated runtime identities
-as hardening.
+**Operational follow-ups:** the Terraform import/apply has since been run from
+Cloud Shell (remote state populated), and the analytics Scheduler is wired. The
+only remaining item is hardening backlog: migrating the four services still on the
+default compute runtime SA to dedicated runtime identities (analytics already
+has one).
 
 **State:** complete. platform-infrastructure is the sixth and final ABS repository;
 the ecosystem is assembled.

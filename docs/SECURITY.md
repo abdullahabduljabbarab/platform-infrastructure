@@ -52,5 +52,3 @@ enabled, it gets its own carefully-scoped identity (ADR-006).
 - **Incremental Terraform adoption.** Only the WIF pool/provider and shared topics
   are adopted; project-level IAM and the Cloud SQL instance are documented but not
   yet under Terraform lifecycle, deliberately, to avoid drift.
-- **On-demand analytics refresh.** Cloud Scheduler is not wired (it would require a
-  permanent App Engine app); the refresh Job runs on demand.

@@ -22,8 +22,8 @@ source, or a documented dependency).
 | Payment-events / risk-events push subscriptions into risk and notification | the consuming service |
 | Notification's subscriptions and dead-letter | notification-service |
 | Analytics BigQuery dataset (`analytics`), its subscriptions and dead-letter | analytics-service |
-| Analytics refresh Cloud Run Job | analytics-service |
-| Cross-service Cloud Scheduler wiring (e.g. the analytics refresh schedule) | **platform-infrastructure** |
+| Analytics refresh Cloud Run Job, its Cloud Scheduler schedule and scheduler identity | analytics-service |
+| Cloud Scheduler API enablement (project-level) | **platform-infrastructure** |
 | Each service's Cloud Run service, Artifact Registry repo, deploy SA and runtime SA | the respective service |
 
 ## Rules
