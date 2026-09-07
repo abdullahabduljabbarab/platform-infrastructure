@@ -25,6 +25,7 @@ source, or a documented dependency).
 | Analytics refresh Cloud Run Job, its Cloud Scheduler schedule and scheduler identity | analytics-service |
 | Cloud Scheduler API enablement (project-level) | **platform-infrastructure** |
 | Each service's Cloud Run service, Artifact Registry repo, deploy SA and runtime SA | the respective service |
+| Engineering portal (`abs-portal`) Cloud Run service, its Artifact Registry repo, and its deploy and runtime identities | **platform-infrastructure** (the portal is the system surface; its deploy infra is owned here, not in the umbrella) |
 
 ## Rules
 
@@ -49,6 +50,7 @@ source, or a documented dependency).
 | risk-engine | `risk-engine-deploy` | Workload Identity Federation |
 | notification-service | `notification-service-deploy` | Workload Identity Federation |
 | analytics-service | `analytics-service-deploy` | Workload Identity Federation |
+| abs-financial-systems (portal) | `abs-portal-deploy` | Workload Identity Federation |
 | platform-infrastructure | none unless CI performs authenticated Terraform | manual/reviewed apply |
 
 ## Runtime identity audit
@@ -67,3 +69,4 @@ its own secrets, and publisher on its own topic where it produces events.
 | risk-engine | `risk-engine-runtime` (dedicated; Cloud SQL Client + read on its own database-url secret + publisher on risk-events) |
 | notification-service | `notification-service-runtime` (dedicated; Cloud SQL Client + read on its own database-url secret; no Pub/Sub, it is a strict sink) |
 | analytics-service | `analytics-service-runtime` (dedicated, dataset-scoped) |
+| abs-portal | `abs-portal-runtime` (dedicated; no cloud permissions, read-only outbound HTTP only) |
